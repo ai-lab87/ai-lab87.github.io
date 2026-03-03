@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1687CAMP 専用チェックリスト</title>
+    <style>
+        /* --- デザイン（CSS） --- */
+        body {
+            background-color: #1a1a1a; /* 黒ギア風の背景 */
+            color: #f0f0f0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #ff9800; /* ランタンのオレンジ */
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 1.1em;
+            color: #ffb74d;
+            border-bottom: 2px solid #444;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #444;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            margin-top: 15px;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 15px;
+            background-color: #ff9800;
+            transition: width 0.4s ease;
+        }
+        #status-text {
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            padding: 15px 10px;
+            background-color: #333;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 1.05em;
+        }
+        label:hover {
+            background-color: #444;
+        }
+        input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.5); /* スマホで押しやすく大きく */
+        }
+        .checked-text {
+            text-decoration: line-through;
+            color: #777;
+        }
+        #reset-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #e53935;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 35px;
+        }
+        #reset-btn:hover {
+            background-color: #c62828;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⛺ 1687CAMP</h1>
+        <p style="text-align: center; margin-top: 0; color: #aaa; font-size: 0.9em;">出発前・設営チェックリスト</p>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress"></div>
+        </div>
+        <p id="status-text">準備状況: 0 / 0</p>
+
+        <div class="category">
+            <h2>⬛ 黒ギア＆設営アイテム</h2>
+            <label><input type="checkbox" class="item-check"> DODワンタッチインナーテント</label>
+            <label><input type="checkbox" class="item-check"> BLACKDOG エアーベッド＆電動ポンプ</label>
+            <label><input type="checkbox" class="item-check"> グランドシート＆ラグ（お座敷用）</label>
+            <label><input type="checkbox" class="item-check"> LEDランタン（充電確認OK？）</label>
+            <label><input type="checkbox" class="item-check"> テーブル＆チェア</label>
+        </div>
+
+        <div class="category">
+            <h2>👧 娘の安全・快適セット</h2>
+            <label><input type="checkbox" class="item-check"> 食事セット（ゼリー食・水分）</label>
+            <label><input type="checkbox" class="item-check"> アウトドア仕様バギー本体</label>
+            <label><input type="checkbox" class="item-check"> バギーの雨よけカバー</label>
+            <label><input type="checkbox" class="item-check"> お着替え＆おむつ・ケア用品</label>
+            <label><input type="checkbox" class="item-check"> 防寒具（毛布・ブランケット）</label>
+        </div>
+
+        <div class="category">
+            <h2>🚙 車載＆パパの癒し</h2>
+            <label><input type="checkbox" class="item-check"> 車中泊用ウィンドウシェード</label>
+            <label><input type="checkbox" class="item-check"> クーラーボックス（保冷剤入れた？）</label>
+            <label><input type="checkbox" class="item-check"> 救急セット・常備薬</label>
+            <label><input type="checkbox" class="item-check"> パパの至福のコーヒーセット ☕</label>
+            <label><input type="checkbox" class="item-check"> ポータブル電源（※未来の購入予定！）</label>
+        </div>
+
+        <button id="reset-btn">🔄 全てリセットする</button>
+    </div>
+
+    <script>
+        /* --- 動作（JavaScript） --- */
+        const checkboxes = document.querySelectorAll('.item-check');
+        const progressBar = document.getElementById('progress');
+        const statusText = document.getElementById('status-text');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // 保存されたデータを読み込む
+        const loadState = () => {
+            checkboxes.forEach((cb, index) => {
+                const isChecked = localStorage.getItem(`1687camp-check-${index}`) === 'true';
+                cb.checked = isChecked;
+                updateStyle(cb);
+            });
+            updateProgress();
+        };
+
+        // 状態を保存する
+        const saveState = (index, isChecked) => {
+            localStorage.setItem(`1687camp-check-${index}`, isChecked);
+        };
+
+        // 見た目を更新する（打ち消し線）
+        const updateStyle = (cb) => {
+            if (cb.checked) {
+                cb.parentElement.classList.add('checked-text');
+            } else {
+                cb.parentElement.classList.remove('checked-text');
+            }
+        };
+
+        // プログレスバーとテキストを更新する
+        const updateProgress = () => {
+            const total = checkboxes.length;
+            const checked = document.querySelectorAll('.item-check:checked').length;
+            const percent = (checked / total) * 100;
+            
+            progressBar.style.width = percent + '%';
+            
+            if (checked === total) {
+                statusText.innerText = `🎉 完璧！出発できます！ (${checked}/${total})`;
+                statusText.style.color = '#4caf50'; // 全部揃ったら緑色に
+            } else {
+                statusText.innerText = `準備状況: ${checked} / ${total}`;
+                statusText.style.color = '#f0f0f0';
+            }
+        };
+
+        // チェックボックスを押した時のイベント
+        checkboxes.forEach((cb, index) => {
+            cb.addEventListener('change', () => {
+                saveState(index, cb.checked);
+                updateStyle(cb);
+                updateProgress();
+            });
+        });
+
+        // リセットボタンを押した時のイベント
+        resetBtn.addEventListener('click', () => {
+            if (confirm('チェックをすべてリセットして、次のキャンプの準備を始めますか？')) {
+                checkboxes.forEach((cb, index) => {
+                    cb.checked = false;
+                    saveState(index, false);
+                    updateStyle(cb);
+                });
+                updateProgress();
+            }
+        });
+
+        // 最初に読み込む
+        loadState();
+    </script>
+</body>
+</html>
