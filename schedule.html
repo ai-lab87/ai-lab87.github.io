@@ -6,45 +6,29 @@
     <title>1687CAMP キャンプのしおり</title>
     <style>
         /* --- デザイン（CSS） --- */
-        body {
-            background-color: #1a1a1a;
-            color: #f0f0f0;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            margin: 0;
-            padding: 15px;
-        }
-        .container {
-            max-width: 500px;
-            margin: 0 auto;
-            background-color: #2a2a2a;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        body { background-color: #1a1a1a; color: #f0f0f0; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; padding: 15px; }
+        .container { max-width: 500px; margin: 0 auto; background-color: #2a2a2a; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
         h1 { color: #ff9800; text-align: center; font-size: 1.5em; margin-bottom: 5px; }
         .subtitle { text-align: center; color: #aaa; font-size: 0.9em; margin-top: 0; margin-bottom: 25px; }
         
-        /* 通常モードのデザイン */
-        .schedule-item {
-            background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 12px;
-            display: flex; align-items: center; cursor: pointer; transition: all 0.3s ease;
-            position: relative; overflow: hidden;
-        }
+        /* 娘さん用：通常モードのデザイン */
+        .schedule-item { background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 12px; display: flex; align-items: center; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
         .schedule-item:active { transform: scale(0.98); }
         .time { font-size: 1.2em; font-weight: bold; color: #ffb74d; width: 65px; }
         .task { font-size: 1.1em; flex-grow: 1; padding-left: 10px; }
         .stamp { font-size: 2em; position: absolute; right: 15px; opacity: 0; transform: scale(3); transition: all 0.4s; }
         
-        /* 完了（はなまる）状態 */
+        /* はなまる状態 */
         .completed { background-color: #1e3a1e; color: #777; }
         .completed .time { color: #666; }
         .completed .stamp { opacity: 1; transform: scale(1); }
         .completed .task { text-decoration: line-through; }
         
-        /* 編集モードのデザイン */
+        /* パパ用：管理ダッシュボードのデザイン */
+        .admin-header { display: none; color: #ff9800; border-bottom: 1px solid #555; padding-bottom: 10px; margin-bottom: 20px; font-weight: bold; }
         .edit-item { display: flex; margin-bottom: 10px; align-items: center; }
         input[type="time"] { width: 80px; background: #444; color: #fff; border: 1px solid #666; padding: 10px; border-radius: 5px; font-size: 1.1em; margin-right: 8px; }
-        input[type="text"] { flex-grow: 1; background: #444; color: #fff; border: 1px solid #666; padding: 10px; border-radius: 5px; font-size: 1em; margin-right: 8px; }
+        select { flex-grow: 1; background: #444; color: #fff; border: 1px solid #666; padding: 10px; border-radius: 5px; font-size: 1em; margin-right: 8px; appearance: none; }
         .btn-delete { background: #e53935; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; font-size: 1.1em; }
         
         /* ボタン類 */
@@ -59,47 +43,68 @@
 
     <div class="container">
         <h1>⛺ 1687CAMP</h1>
-        <p class="subtitle">👧 むすめちゃん専用 キャンプのしおり</p>
+        <p class="subtitle" id="main-subtitle">👧 むすめちゃん専用 キャンプのしおり</p>
+
+        <div id="admin-header" class="admin-header">⚙️ スケジュール管理ダッシュボード</div>
 
         <div id="schedule-list"></div>
 
         <div id="edit-list" style="display: none;"></div>
 
-        <button id="btn-add" class="btn btn-add">➕ あたらしい 予定をついか</button>
-        <button id="btn-save" class="btn btn-save">💾 へんこうを ほぞんする</button>
+        <button id="btn-add" class="btn btn-add">➕ 新規予定を追加</button>
+        <button id="btn-save" class="btn btn-save">💾 変更を保存して終了</button>
 
-        <button id="btn-edit" class="btn btn-edit">✏️ パパ専用：スケジュールをへんこう</button>
-        <button id="btn-reset" class="btn btn-reset">🔄 はなまるを ぜんぶけす</button>
+        <button id="btn-edit" class="btn btn-edit">⚙️ 管理者専用：スケジュール編集</button>
+        <button id="btn-reset" class="btn btn-reset">🔄 はなまるを全てリセット</button>
     </div>
 
     <script>
+        /* --- 📝 プルダウンの選択肢（ここを書き換えれば項目が増えます） --- */
+        const taskOptions = [
+            "🚗 キャンプじょうに とうちゃく！",
+            "⛺ テントづくり（パパをおうえん！）",
+            "🍩 おやつ・ゼリー タイム",
+            "🌿 バギーで おさんぽ",
+            "🔥 たきびに ひをつけよう",
+            "🍛 おいしい ゆうごはん",
+            "🪥 はみがき・おきがえ",
+            "💤 テントで おやすみなさい",
+            "♨️ おんせん・おふろ",
+            "👋 おかたづけ・かえるじゅんび"
+        ];
+
         /* --- データの準備 --- */
-        // もし保存されたデータがあればそれを使い、なければ最初の設定を使う
         let defaultData = [
             { time: "13:00", task: "🚗 キャンプじょうに とうちゃく！", completed: false },
             { time: "14:00", task: "⛺ テントづくり（パパをおうえん！）", completed: false },
-            { time: "15:00", task: "🍩 じゆう・おやつタイム", completed: false },
+            { time: "15:00", task: "🍩 おやつ・ゼリー タイム", completed: false },
             { time: "17:00", task: "🔥 たきびに ひをつけよう", completed: false },
             { time: "18:00", task: "🍛 おいしい ゆうごはん", completed: false },
             { time: "20:00", task: "💤 テントで おやすみなさい", completed: false }
         ];
         
-        let scheduleData = JSON.parse(localStorage.getItem('1687camp-schedule-data-v2')) || defaultData;
+        let scheduleData = JSON.parse(localStorage.getItem('1687camp-schedule-data-v3')) || defaultData;
 
-        // 画面の部品を準備
+        // 画面の部品
         const listContainer = document.getElementById('schedule-list');
         const editContainer = document.getElementById('edit-list');
+        const adminHeader = document.getElementById('admin-header');
+        const mainSubtitle = document.getElementById('main-subtitle');
         const btnEdit = document.getElementById('btn-edit');
         const btnSave = document.getElementById('btn-save');
         const btnAdd = document.getElementById('btn-add');
         const btnReset = document.getElementById('btn-reset');
 
-        /* --- 1. 通常モードの画面をつくる --- */
+        /* --- 1. 娘さん用：通常モード --- */
         function renderNormal() {
             listContainer.innerHTML = '';
             listContainer.style.display = 'block';
             editContainer.style.display = 'none';
+            adminHeader.style.display = 'none';
+            mainSubtitle.style.display = 'block';
+            
             btnEdit.style.display = 'block';
+            btnEdit.textContent = '⚙️ 管理者専用：スケジュール編集';
             btnReset.style.display = 'block';
             btnSave.style.display = 'none';
             btnAdd.style.display = 'none';
@@ -115,7 +120,6 @@
                     <div class="stamp">💮</div>
                 `;
                 
-                // タップして はなまる をつける
                 div.addEventListener('click', () => {
                     item.completed = !item.completed;
                     div.classList.toggle('completed');
@@ -125,11 +129,14 @@
             });
         }
 
-        /* --- 2. 編集モードの画面をつくる --- */
+        /* --- 2. パパ用：管理ダッシュボード（プルダウン式） --- */
         function renderEdit() {
             editContainer.innerHTML = '';
             listContainer.style.display = 'none';
             editContainer.style.display = 'block';
+            adminHeader.style.display = 'block';
+            mainSubtitle.style.display = 'none';
+
             btnEdit.style.display = 'none';
             btnReset.style.display = 'none';
             btnSave.style.display = 'block';
@@ -138,9 +145,18 @@
             scheduleData.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'edit-item';
+                
+                // プルダウン（select）の作成
+                let selectHTML = `<select onchange="updateData(${index}, 'task', this.value)">`;
+                taskOptions.forEach(opt => {
+                    let selected = (item.task === opt) ? "selected" : "";
+                    selectHTML += `<option value="${opt}" ${selected}>${opt}</option>`;
+                });
+                selectHTML += `</select>`;
+
                 div.innerHTML = `
                     <input type="time" value="${item.time}" onchange="updateData(${index}, 'time', this.value)">
-                    <input type="text" value="${item.task}" onchange="updateData(${index}, 'task', this.value)">
+                    ${selectHTML}
                     <button class="btn-delete" onclick="deleteItem(${index})">🗑️</button>
                 `;
                 editContainer.appendChild(div);
@@ -156,33 +172,26 @@
             renderEdit();
         }
         function saveData() {
-            // 時間の順番に並べ替える（自動ソート）
-            scheduleData.sort((a, b) => a.time.localeCompare(b.time));
-            localStorage.setItem('1687camp-schedule-data-v2', JSON.stringify(scheduleData));
+            scheduleData.sort((a, b) => a.time.localeCompare(b.time)); // 時間順に自動並び替え
+            localStorage.setItem('1687camp-schedule-data-v3', JSON.stringify(scheduleData));
         }
 
-        /* --- ボタンを押した時の動き --- */
+        /* --- ボタンの動き --- */
         btnEdit.addEventListener('click', renderEdit);
-        
-        btnSave.addEventListener('click', () => {
-            saveData();
-            renderNormal();
-        });
-
+        btnSave.addEventListener('click', () => { saveData(); renderNormal(); });
         btnAdd.addEventListener('click', () => {
-            scheduleData.push({ time: "12:00", task: "あたらしい よてい", completed: false });
+            scheduleData.push({ time: "12:00", task: taskOptions[0], completed: false });
             renderEdit();
         });
-
         btnReset.addEventListener('click', () => {
-            if(confirm('はなまる をぜんぶ消して、つぎのキャンプの じゅんびをしますか？')) {
+            if(confirm('全てのチェック（💮）をリセットして、次回のキャンプ準備をしますか？')) {
                 scheduleData.forEach(item => item.completed = false);
                 saveData();
                 renderNormal();
             }
         });
 
-        // 最初は通常モードを表示
+        // 最初は通常モード
         renderNormal();
     </script>
 </body>
