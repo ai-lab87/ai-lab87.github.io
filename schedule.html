@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1687CAMP キャンプのしおり</title>
+    <style>
+        /* --- デザイン（CSS） --- */
+        body {
+            background-color: #1a1a1a; /* パパこだわりの黒ギア背景 */
+            color: #f0f0f0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        h1 {
+            color: #ff9800; /* ランタンのオレンジ */
+            text-align: center;
+            font-size: 1.5em;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+        .schedule-item {
+            background-color: #333;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        /* タップした時に少し沈み込む動き */
+        .schedule-item:active {
+            transform: scale(0.98);
+        }
+        .time {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ffb74d;
+            width: 65px;
+        }
+        .task {
+            font-size: 1.1em;
+            flex-grow: 1;
+            padding-left: 10px;
+        }
+        .stamp {
+            font-size: 2em;
+            position: absolute;
+            right: 15px;
+            opacity: 0; /* 最初は隠しておく */
+            transform: scale(3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        /* タップして完了した時の見た目 */
+        .completed {
+            background-color: #1e3a1e; /* 落ち着いたダークグリーン */
+            color: #777;
+        }
+        .completed .time {
+            color: #666;
+        }
+        .completed .stamp {
+            opacity: 1; /* はなまるを表示 */
+            transform: scale(1);
+        }
+        .completed .task {
+            text-decoration: line-through;
+        }
+        #reset-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #e53935;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 35px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⛺ 1687CAMP</h1>
+        <p class="subtitle">👧 むすめちゃん専用 キャンプのしおり</p>
+
+        <div id="schedule-list">
+            </div>
+
+        <button id="reset-btn">🔄 あたらしく やりなおす</button>
+    </div>
+
+    <script>
+        /* --- スケジュールの内容（自由に書き換えOK！） --- */
+        const scheduleData = [
+            { time: "13:00", task: "🚗 キャンプじょうに とうちゃく！" },
+            { time: "14:00", task: "⛺ テントづくり（パパをおうえん！）" },
+            { time: "15:00", task: "🍩 じゆう・おやつタイム" },
+            { time: "16:00", task: "🌿 おさんぽ・あそぶ じかん" },
+            { time: "17:00", task: "🔥 たきびに ひをつけよう" },
+            { time: "18:00", task: "🍛 おいしい ゆうごはん" },
+            { time: "19:00", task: "🪥 はみがき・おきがえ" },
+            { time: "20:00", task: "💤 テントで おやすみなさい" }
+        ];
+
+        /* --- 動作（JavaScript） --- */
+        const listContainer = document.getElementById('schedule-list');
+
+        scheduleData.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'schedule-item';
+            
+            div.innerHTML = `
+                <div class="time">${item.time}</div>
+                <div class="task">${item.task}</div>
+                <div class="stamp">💮</div>
+            `;
+            
+            // 保存されたデータを読み込む
+            if(localStorage.getItem('1687camp-schedule-' + index) === 'true') {
+                div.classList.add('completed');
+            }
+
+            // タップした時のイベント（はなまるスタンプ！）
+            div.addEventListener('click', () => {
+                const isCompleted = div.classList.toggle('completed');
+                localStorage.setItem('1687camp-schedule-' + index, isCompleted);
+            });
+
+            listContainer.appendChild(div);
+        });
+
+        // リセットボタン
+        document.getElementById('reset-btn').addEventListener('click', () => {
+            if(confirm('しおりを さいしょから やりなおしますか？')) {
+                document.querySelectorAll('.schedule-item').forEach((div, index) => {
+                    div.classList.remove('completed');
+                    localStorage.setItem('1687camp-schedule-' + index, 'false');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
