@@ -7,7 +7,7 @@
     <style>
         /* --- デザイン（CSS） --- */
         body {
-            background-color: #1a1a1a; /* パパこだわりの黒ギア背景 */
+            background-color: #1a1a1a;
             color: #f0f0f0;
             font-family: 'Helvetica Neue', Arial, sans-serif;
             margin: 0;
@@ -21,82 +21,38 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-        h1 {
-            color: #ff9800; /* ランタンのオレンジ */
-            text-align: center;
-            font-size: 1.5em;
-            margin-bottom: 5px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #aaa;
-            font-size: 0.9em;
-            margin-top: 0;
-            margin-bottom: 25px;
-        }
+        h1 { color: #ff9800; text-align: center; font-size: 1.5em; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #aaa; font-size: 0.9em; margin-top: 0; margin-bottom: 25px; }
+        
+        /* 通常モードのデザイン */
         .schedule-item {
-            background-color: #333;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
+            background-color: #333; padding: 15px; border-radius: 10px; margin-bottom: 12px;
+            display: flex; align-items: center; cursor: pointer; transition: all 0.3s ease;
+            position: relative; overflow: hidden;
         }
-        /* タップした時に少し沈み込む動き */
-        .schedule-item:active {
-            transform: scale(0.98);
-        }
-        .time {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #ffb74d;
-            width: 65px;
-        }
-        .task {
-            font-size: 1.1em;
-            flex-grow: 1;
-            padding-left: 10px;
-        }
-        .stamp {
-            font-size: 2em;
-            position: absolute;
-            right: 15px;
-            opacity: 0; /* 最初は隠しておく */
-            transform: scale(3);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        /* タップして完了した時の見た目 */
-        .completed {
-            background-color: #1e3a1e; /* 落ち着いたダークグリーン */
-            color: #777;
-        }
-        .completed .time {
-            color: #666;
-        }
-        .completed .stamp {
-            opacity: 1; /* はなまるを表示 */
-            transform: scale(1);
-        }
-        .completed .task {
-            text-decoration: line-through;
-        }
-        #reset-btn {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background-color: #e53935;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 35px;
-        }
+        .schedule-item:active { transform: scale(0.98); }
+        .time { font-size: 1.2em; font-weight: bold; color: #ffb74d; width: 65px; }
+        .task { font-size: 1.1em; flex-grow: 1; padding-left: 10px; }
+        .stamp { font-size: 2em; position: absolute; right: 15px; opacity: 0; transform: scale(3); transition: all 0.4s; }
+        
+        /* 完了（はなまる）状態 */
+        .completed { background-color: #1e3a1e; color: #777; }
+        .completed .time { color: #666; }
+        .completed .stamp { opacity: 1; transform: scale(1); }
+        .completed .task { text-decoration: line-through; }
+        
+        /* 編集モードのデザイン */
+        .edit-item { display: flex; margin-bottom: 10px; align-items: center; }
+        input[type="time"] { width: 80px; background: #444; color: #fff; border: 1px solid #666; padding: 10px; border-radius: 5px; font-size: 1.1em; margin-right: 8px; }
+        input[type="text"] { flex-grow: 1; background: #444; color: #fff; border: 1px solid #666; padding: 10px; border-radius: 5px; font-size: 1em; margin-right: 8px; }
+        .btn-delete { background: #e53935; color: white; border: none; border-radius: 5px; padding: 10px 15px; cursor: pointer; font-size: 1.1em; }
+        
+        /* ボタン類 */
+        .btn { display: block; width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-reset { background-color: #e53935; color: white; margin-top: 35px; }
+        .btn-edit { background-color: #555; color: white; }
+        .btn-save { background-color: #ff9800; color: #1a1a1a; display: none; }
+        .btn-add { background-color: #2196f3; color: white; display: none; margin-top: 25px; }
     </style>
 </head>
 <body>
@@ -105,61 +61,129 @@
         <h1>⛺ 1687CAMP</h1>
         <p class="subtitle">👧 むすめちゃん専用 キャンプのしおり</p>
 
-        <div id="schedule-list">
-            </div>
+        <div id="schedule-list"></div>
 
-        <button id="reset-btn">🔄 あたらしく やりなおす</button>
+        <div id="edit-list" style="display: none;"></div>
+
+        <button id="btn-add" class="btn btn-add">➕ あたらしい 予定をついか</button>
+        <button id="btn-save" class="btn btn-save">💾 へんこうを ほぞんする</button>
+
+        <button id="btn-edit" class="btn btn-edit">✏️ パパ専用：スケジュールをへんこう</button>
+        <button id="btn-reset" class="btn btn-reset">🔄 はなまるを ぜんぶけす</button>
     </div>
 
     <script>
-        /* --- スケジュールの内容（自由に書き換えOK！） --- */
-        const scheduleData = [
-            { time: "13:00", task: "🚗 キャンプじょうに とうちゃく！" },
-            { time: "14:00", task: "⛺ テントづくり（パパをおうえん！）" },
-            { time: "15:00", task: "🍩 じゆう・おやつタイム" },
-            { time: "16:00", task: "🌿 おさんぽ・あそぶ じかん" },
-            { time: "17:00", task: "🔥 たきびに ひをつけよう" },
-            { time: "18:00", task: "🍛 おいしい ゆうごはん" },
-            { time: "19:00", task: "🪥 はみがき・おきがえ" },
-            { time: "20:00", task: "💤 テントで おやすみなさい" }
+        /* --- データの準備 --- */
+        // もし保存されたデータがあればそれを使い、なければ最初の設定を使う
+        let defaultData = [
+            { time: "13:00", task: "🚗 キャンプじょうに とうちゃく！", completed: false },
+            { time: "14:00", task: "⛺ テントづくり（パパをおうえん！）", completed: false },
+            { time: "15:00", task: "🍩 じゆう・おやつタイム", completed: false },
+            { time: "17:00", task: "🔥 たきびに ひをつけよう", completed: false },
+            { time: "18:00", task: "🍛 おいしい ゆうごはん", completed: false },
+            { time: "20:00", task: "💤 テントで おやすみなさい", completed: false }
         ];
+        
+        let scheduleData = JSON.parse(localStorage.getItem('1687camp-schedule-data-v2')) || defaultData;
 
-        /* --- 動作（JavaScript） --- */
+        // 画面の部品を準備
         const listContainer = document.getElementById('schedule-list');
+        const editContainer = document.getElementById('edit-list');
+        const btnEdit = document.getElementById('btn-edit');
+        const btnSave = document.getElementById('btn-save');
+        const btnAdd = document.getElementById('btn-add');
+        const btnReset = document.getElementById('btn-reset');
 
-        scheduleData.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'schedule-item';
-            
-            div.innerHTML = `
-                <div class="time">${item.time}</div>
-                <div class="task">${item.task}</div>
-                <div class="stamp">💮</div>
-            `;
-            
-            // 保存されたデータを読み込む
-            if(localStorage.getItem('1687camp-schedule-' + index) === 'true') {
-                div.classList.add('completed');
-            }
+        /* --- 1. 通常モードの画面をつくる --- */
+        function renderNormal() {
+            listContainer.innerHTML = '';
+            listContainer.style.display = 'block';
+            editContainer.style.display = 'none';
+            btnEdit.style.display = 'block';
+            btnReset.style.display = 'block';
+            btnSave.style.display = 'none';
+            btnAdd.style.display = 'none';
 
-            // タップした時のイベント（はなまるスタンプ！）
-            div.addEventListener('click', () => {
-                const isCompleted = div.classList.toggle('completed');
-                localStorage.setItem('1687camp-schedule-' + index, isCompleted);
-            });
-
-            listContainer.appendChild(div);
-        });
-
-        // リセットボタン
-        document.getElementById('reset-btn').addEventListener('click', () => {
-            if(confirm('しおりを さいしょから やりなおしますか？')) {
-                document.querySelectorAll('.schedule-item').forEach((div, index) => {
-                    div.classList.remove('completed');
-                    localStorage.setItem('1687camp-schedule-' + index, 'false');
+            scheduleData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'schedule-item';
+                if(item.completed) div.classList.add('completed');
+                
+                div.innerHTML = `
+                    <div class="time">${item.time}</div>
+                    <div class="task">${item.task}</div>
+                    <div class="stamp">💮</div>
+                `;
+                
+                // タップして はなまる をつける
+                div.addEventListener('click', () => {
+                    item.completed = !item.completed;
+                    div.classList.toggle('completed');
+                    saveData();
                 });
+                listContainer.appendChild(div);
+            });
+        }
+
+        /* --- 2. 編集モードの画面をつくる --- */
+        function renderEdit() {
+            editContainer.innerHTML = '';
+            listContainer.style.display = 'none';
+            editContainer.style.display = 'block';
+            btnEdit.style.display = 'none';
+            btnReset.style.display = 'none';
+            btnSave.style.display = 'block';
+            btnAdd.style.display = 'block';
+
+            scheduleData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'edit-item';
+                div.innerHTML = `
+                    <input type="time" value="${item.time}" onchange="updateData(${index}, 'time', this.value)">
+                    <input type="text" value="${item.task}" onchange="updateData(${index}, 'task', this.value)">
+                    <button class="btn-delete" onclick="deleteItem(${index})">🗑️</button>
+                `;
+                editContainer.appendChild(div);
+            });
+        }
+
+        /* --- データの更新と保存 --- */
+        window.updateData = function(index, field, value) {
+            scheduleData[index][field] = value;
+        }
+        window.deleteItem = function(index) {
+            scheduleData.splice(index, 1);
+            renderEdit();
+        }
+        function saveData() {
+            // 時間の順番に並べ替える（自動ソート）
+            scheduleData.sort((a, b) => a.time.localeCompare(b.time));
+            localStorage.setItem('1687camp-schedule-data-v2', JSON.stringify(scheduleData));
+        }
+
+        /* --- ボタンを押した時の動き --- */
+        btnEdit.addEventListener('click', renderEdit);
+        
+        btnSave.addEventListener('click', () => {
+            saveData();
+            renderNormal();
+        });
+
+        btnAdd.addEventListener('click', () => {
+            scheduleData.push({ time: "12:00", task: "あたらしい よてい", completed: false });
+            renderEdit();
+        });
+
+        btnReset.addEventListener('click', () => {
+            if(confirm('はなまる をぜんぶ消して、つぎのキャンプの じゅんびをしますか？')) {
+                scheduleData.forEach(item => item.completed = false);
+                saveData();
+                renderNormal();
             }
         });
+
+        // 最初は通常モードを表示
+        renderNormal();
     </script>
 </body>
 </html>
